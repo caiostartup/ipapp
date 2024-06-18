@@ -7,6 +7,7 @@ import com.hyqoo.ipapp.model.IpData
 import com.hyqoo.ipapp.model.asEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -22,21 +23,19 @@ class OfflineFirstIpDataRepository @Inject constructor(
     private val network: IpDataNetworkDataSource,
 ): IpDataRepository {
 
-    override fun getIpData(ip: String): Flow<IpData?> {
+    override suspend fun getIpData(ip: String): Flow<IpData?> {
         val localIpData = ipDataDao.getIpDataEntity(ip).map { it?.asDto() }
-        localIpData.getValueOrNull()?.let {
-            val fiveMinutesAhead = it.lastUpdate + 5.minutes
+        var localIpDataDto = localIpData.first()
+        if(localIpDataDto != null) {
+            val fiveMinutesAhead = localIpDataDto.lastUpdate + 5.minutes
             if(fiveMinutesAhead > Clock.System.now()){
                 return localIpData
             }
         }
-        runBlocking(Dispatchers.IO) {
-            val remoteIpData = network.getIpData(ip)
-            ipDataDao.upsertIpDatas(remoteIpData.asEntity())
-            return@runBlocking ipDataDao.getIpDataEntity(ip).map { it?.asDto() }
-        }.run {
-            return flowOf(null)
-        }
+        val remoteIpData = network.getIpData(ip)
+        ipDataDao.upsertIpDatas(remoteIpData.asEntity())
+        return ipDataDao.getIpDataEntity(ip).map { it?.asDto() }
+
     }
 }
 

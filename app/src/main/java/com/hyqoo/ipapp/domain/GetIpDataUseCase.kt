@@ -13,7 +13,7 @@ class GetIpDataUseCase @Inject constructor(
      *
      * @param ip - the field used search the data.
      */
-    operator fun invoke(ip: String): Flow<IpData?> =
+    suspend operator fun invoke(ip: String): Flow<IpData?> =
         ipDataRepository.getIpData(ip)
 
 }

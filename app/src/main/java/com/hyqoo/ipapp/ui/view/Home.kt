@@ -41,12 +41,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.hyqoo.ipapp.R
+import com.hyqoo.ipapp.model.IpData
 import com.hyqoo.ipapp.ui.radialGradientScrim
 import com.hyqoo.ipapp.ui.theme.IpAppTheme
 import com.hyqoo.ipapp.ui.tooling.DevicePreviews
@@ -71,14 +73,14 @@ fun MainScreen(
     when (val uiState = homeScreenUiState) {
         is HomeScreenUiState.Loading -> HomeScreenLoading()
         is HomeScreenUiState.Error -> HomeScreenError(errorMessage = uiState.errorMessage)
-        is HomeScreenUiState.Ready -> {
+        is HomeScreenUiState.Ready ->
             HomeScreen(
                 searchQuery = searchQuery,
+                ipData = ipDataUiState,
                 handleSearch = ipDataSearchViewModel::handleSearch,
                 handleTextChange = ipDataSearchViewModel::handleTextChange,
                 windowSizeClass = windowSizeClass
             )
-        }
     }
 }
 
@@ -180,6 +182,7 @@ private fun HomeScreenBackground(
 @Composable
 private fun HomeScreen(
     searchQuery: String,
+    ipData: IpData?,
     handleSearch: () -> Unit,
     handleTextChange: (String) -> Unit,
     windowSizeClass: WindowSizeClass,
@@ -207,6 +210,7 @@ private fun HomeScreen(
         ) { contentPadding ->
             HomeContent(
                 showGrid = true,
+                ipData = ipData,
                 modifier = Modifier.padding(contentPadding)
             )
         }
@@ -216,56 +220,50 @@ private fun HomeScreen(
 @Composable
 private fun HomeContent(
     showGrid: Boolean,
+    ipData: IpData?,
     modifier: Modifier = Modifier
 ) {
+    Surface(modifier = Modifier.padding(16.dp).fillMaxSize()) {
 
-    // Note: ideally, `HomeContentColumn` and `HomeContentGrid` would be the same implementation
-    // (i.e. a grid). However, LazyVerticalGrid does not have the concept of a sticky header.
-    // So we are using two different composables here depending on the provided window size class.
-    // See: https://issuetracker.google.com/issues/231557184
-    if (showGrid) HomeContentGrid() else HomeContentColumn()
-
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun HomeContentColumn(
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize()
-    ) {
-        item {
-            FollowedPodcastItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+        Row {
+            RowContent(title = "ip", content = ipData?.ip)
+            RowContent(title = "country", content = ipData?.country)
+            RowContent(title = "countryCode", content = ipData?.countryCode)
+            RowContent(title = "region", content = ipData?.region)
+            RowContent(title = "regionName", content = ipData?.regionName)
+            RowContent(title = "city", content = ipData?.city)
+            RowContent(title = "zip", content = ipData?.zip)
+            RowContent(title = "lat", content = ipData?.lat.toString())
+            RowContent(title = "lon", content = ipData?.lon.toString())
+            RowContent(title = "timezone", content = ipData?.timezone)
+            RowContent(title = "isp", content = ipData?.isp)
+            RowContent(title = "org", content = ipData?.org)
+            RowContent(title = "as", content = ipData?.autonomousSystem)
         }
     }
+
+
+//    if (showGrid) HomeContentGrid() else HomeContentColumn()
 }
 
 @Composable
-private fun HomeContentGrid(
-    modifier: Modifier = Modifier
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(362.dp),
-        modifier = modifier.fillMaxSize()
+private fun RowContent(title: String, content: String?){
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-
+        Text(
+            text = title,
+            modifier = Modifier.padding(8.dp)
+        )
+        Text(
+            text = content ?: "",
+            modifier = Modifier.padding(8.dp)
+        )
     }
 }
 
-@Composable
-private fun FollowedPodcastItem(
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Spacer(Modifier.height(16.dp))
-
-        Spacer(Modifier.height(16.dp))
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview

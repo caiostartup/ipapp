@@ -48,16 +48,16 @@ class IpDataSearchViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = null,
             ).collect { ipData ->
-                ipData?.let{ it ->
+                ipData?.let { it ->
                     it.message?.let { message ->
                         _ipDataUiState.value = null
                         _state.value = HomeScreenUiState.Error(message)
-                    } ?: Runnable {
+                    } ?: run {
                         _ipDataUiState.value = ipData
                         _state.value = HomeScreenUiState.Ready
                     }
-                } ?: Runnable {
-                    _ipDataUiState.value = ipData
+                } ?: run {
+                    _ipDataUiState.value = null
                     _state.value = HomeScreenUiState.Ready
                 }
             }

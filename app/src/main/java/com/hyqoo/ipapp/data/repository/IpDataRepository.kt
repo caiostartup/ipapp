@@ -8,6 +8,6 @@ interface IpDataRepository  {
     /**
      * Gets the available IpData as a stream
      */
-    fun getIpData(ip: String): Flow<IpData?>
+    suspend fun getIpData(ip: String): Flow<IpData?>
 
 }
