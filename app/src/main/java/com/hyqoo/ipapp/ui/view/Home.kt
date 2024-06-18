@@ -8,40 +8,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,7 +44,6 @@ import com.hyqoo.ipapp.model.IpData
 import com.hyqoo.ipapp.ui.radialGradientScrim
 import com.hyqoo.ipapp.ui.theme.IpAppTheme
 import com.hyqoo.ipapp.ui.tooling.DevicePreviews
-import com.hyqoo.ipapp.ui.viewmodel.HomeScreenUiState
 import com.hyqoo.ipapp.ui.viewmodel.IpDataSearchViewModel
 
 data class HomeState(
@@ -60,7 +51,7 @@ data class HomeState(
 )
 
 @Composable
-fun MainScreen(
+fun MainScreen (
     windowSizeClass: WindowSizeClass,
     ipDataSearchViewModel: IpDataSearchViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -70,18 +61,31 @@ fun MainScreen(
     val ipDataUiState by ipDataSearchViewModel.ipDataUiState.collectAsStateWithLifecycle()
     val searchQuery by ipDataSearchViewModel.searchQuery.collectAsStateWithLifecycle(initialValue = "")
 
-    when (val uiState = homeScreenUiState) {
-        is HomeScreenUiState.Loading -> HomeScreenLoading()
-        is HomeScreenUiState.Error -> HomeScreenError(errorMessage = uiState.errorMessage)
-        is HomeScreenUiState.Ready ->
-            HomeScreen(
-                searchQuery = searchQuery,
-                ipData = ipDataUiState,
-                handleSearch = ipDataSearchViewModel::handleSearch,
-                handleTextChange = ipDataSearchViewModel::handleTextChange,
-                windowSizeClass = windowSizeClass
-            )
+    Surface(modifier = modifier) {
+        HomeScreen(
+            searchQuery = searchQuery,
+            ipData = ipDataUiState,
+            handleSearch = ipDataSearchViewModel::handleSearch,
+            handleTextChange = ipDataSearchViewModel::handleTextChange
+        )
+//            HomeContent(
+//                ipData = ipDataUiState,
+//                modifier = Modifier.padding(16.dp)
+//            )
     }
+//    HomeScreenError("Teste")
+//    when (val uiState = homeScreenUiState) {
+//        is HomeScreenUiState.Loading -> HomeScreenLoading()
+//        is HomeScreenUiState.Error -> HomeScreenError(errorMessage = uiState.errorMessage)
+//        is HomeScreenUiState.Ready ->
+//            HomeScreen(
+//                searchQuery = searchQuery,
+//                ipData = ipDataUiState,
+//                handleSearch = ipDataSearchViewModel::handleSearch,
+//                handleTextChange = ipDataSearchViewModel::handleTextChange,
+//                windowSizeClass = windowSizeClass
+//            )
+//    }
 }
 
 @Composable
@@ -125,40 +129,13 @@ fun HomeScreenErrorPreview() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HomeAppBar(
+fun HomeAppBar(
     searchQuery: String,
     handleTextChange: (String) -> Unit,
     handleSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        horizontalArrangement = Arrangement.End,
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color.Transparent)
-            .padding(end = 16.dp, top = 8.dp, bottom = 8.dp)
-    ) {
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = handleTextChange,
-            placeholder = {
-                Text(stringResource(id = R.string.search_for_a_podcast))
-            },
-            onSearch = {},
-            active = true,
-            onActiveChange = {},
-            trailingIcon = {
-                IconButton(
-                    onClick = handleSearch
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null
-                    )
-                }
-            }
-        ) { }
-    }
+
 }
 
 @Composable
@@ -179,79 +156,238 @@ private fun HomeScreenBackground(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreen(
     searchQuery: String,
     ipData: IpData?,
     handleSearch: () -> Unit,
     handleTextChange: (String) -> Unit,
-    windowSizeClass: WindowSizeClass,
     modifier: Modifier = Modifier
 ) {
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    HomeScreenBackground(
-        modifier = modifier.windowInsetsPadding(WindowInsets.navigationBars)
-    ) {
-        Scaffold(
-            topBar = {
-                HomeAppBar(
-                    searchQuery = searchQuery,
-                    handleSearch = handleSearch,
-                    handleTextChange = handleTextChange,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
-            },
-            containerColor = Color.Transparent
-        ) { contentPadding ->
-            HomeContent(
-                showGrid = true,
-                ipData = ipData,
-                modifier = Modifier.padding(contentPadding)
-            )
+    Scaffold(
+        content = { contentPadding ->
+            Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+                DockedSearchBar(
+                    query = searchQuery,
+                    onQueryChange = handleTextChange,
+                    placeholder = {
+                        Text(stringResource(id = R.string.search_for_a_podcast))
+                    },
+                    onSearch = {},
+                    active = true,
+                    onActiveChange = {},
+                    trailingIcon = {
+                        IconButton(
+                            onClick = handleSearch
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                ){
+                    HomeContent(
+                        ipData = ipData,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
-    }
+    )
 }
 
 @Composable
 private fun HomeContent(
-    showGrid: Boolean,
     ipData: IpData?,
     modifier: Modifier = Modifier
 ) {
-    Surface(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-
-        Row {
-            RowContent(title = "ip", content = ipData?.ip)
-            RowContent(title = "country", content = ipData?.country)
-            RowContent(title = "countryCode", content = ipData?.countryCode)
-            RowContent(title = "region", content = ipData?.region)
-            RowContent(title = "regionName", content = ipData?.regionName)
-            RowContent(title = "city", content = ipData?.city)
-            RowContent(title = "zip", content = ipData?.zip)
-            RowContent(title = "lat", content = ipData?.lat.toString())
-            RowContent(title = "lon", content = ipData?.lon.toString())
-            RowContent(title = "timezone", content = ipData?.timezone)
-            RowContent(title = "isp", content = ipData?.isp)
-            RowContent(title = "org", content = ipData?.org)
-            RowContent(title = "as", content = ipData?.autonomousSystem)
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+//        verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.Top),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterHorizontally),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
+        item {
+            Text(
+                text = "ip",
+                style = MaterialTheme.typography.headlineSmall
+            )
         }
+        item {
+            Text(
+                text = ipData?.ip ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+        }
+        item {
+            Text(
+                text = "country",
+                style = MaterialTheme.typography.headlineSmall
+            )
+
+        }
+        item {
+            Text(
+                text = ipData?.country ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+        }
+        item {
+            Text(
+                text = "countryCode",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.countryCode ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "region",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.region ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+
+        item {
+            Text(
+                text = "regionName",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.regionName ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = "city",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.city ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = "zip",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.zip ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = "lat",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.lat.toString() ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "lon",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.lon.toString() ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "timezone",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.timezone ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "isp",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.isp ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "org",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.org ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        item {
+            Text(
+                text = "as",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        item {
+            Text(
+                text = ipData?.autonomousSystem ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
     }
 
-
-//    if (showGrid) HomeContentGrid() else HomeContentColumn()
 }
 
 @Composable
-private fun RowContent(title: String, content: String?){
+private fun RowContent(title: String, content: String?) {
     Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = title,

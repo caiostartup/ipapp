@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.google.accompanist.adaptive.calculateDisplayFeatures
 import com.hyqoo.ipapp.ui.rememberAppState
 import com.hyqoo.ipapp.ui.theme.IpAppTheme
 import com.hyqoo.ipapp.ui.view.IpAppApp
@@ -19,8 +18,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val displayFeatures = calculateDisplayFeatures(this)
-
             IpAppTheme {
                 IpAppApp(
                     appState = rememberAppState()
