@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">IpApp</string>
+    <string name="an_error_has_occurred">Ocorreu uma falha, por favor tente novamente mais tarde.</string>
+    <string name="search_for_a_podcast">Find by ip</string>
+</resources>
